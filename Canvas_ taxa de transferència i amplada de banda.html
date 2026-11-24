@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Canvas: taxa de transferència i amplada de banda</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef3f7; --surface:#ffffff; --ink:#14232f; --muted:#51656f;
+  --line:#c5d3dc; --pipe:#9fb8c8; --flow:#0a7d8c; --warn:#c2410c; --hi:#e3f1f4;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1b24; --surface:#17262f; --ink:#e6eef3; --muted:#9db0bb;
+    --line:#2c4150; --pipe:#35566a; --flow:#4cc3d3; --warn:#f59e6b; --hi:#1b3540;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1b24; --surface:#17262f; --ink:#e6eef3; --muted:#9db0bb;
+  --line:#2c4150; --pipe:#35566a; --flow:#4cc3d3; --warn:#f59e6b; --hi:#1b3540;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:28px 18px 40px}
+h1{font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 22px;max-width:60ch}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.box h2{font-size:1.05rem;margin:0 0 8px}
+.box p{margin:0 0 8px}
+.box p:last-child{margin-bottom:0}
+.c12{grid-column:span 12}.c7{grid-column:span 7}.c5{grid-column:span 5}.c6{grid-column:span 6}.c4{grid-column:span 4}.c8{grid-column:span 8}
+@media(max-width:760px){.c7,.c5,.c6,.c4,.c8{grid-column:span 12}}
+.def{border-left:5px solid var(--flow)}
+.pipe{width:100%;height:auto;display:block;margin:6px 0}
+.pipe text{fill:var(--ink);font:13px "Segoe UI",system-ui,sans-serif}
+.note{color:var(--muted);font-size:.92rem}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;width:34%}
+.formula{background:var(--hi);border-radius:8px;padding:12px 14px;margin:8px 0;font-size:1.25rem;font-weight:600;text-align:center}
+.formula small{display:block;font-size:.85rem;font-weight:400;color:var(--muted)}
+.steps{margin:6px 0 0;padding-left:0;list-style:none}
+.steps li{padding:3px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.chips li{background:var(--hi);border-radius:999px;padding:4px 12px;font-size:.92rem}
+.units{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0}
+.u{background:var(--hi);border:1px solid var(--line);border-radius:6px;padding:4px 12px;font-weight:600}
+.arr{color:var(--muted);font-size:.85rem}
+.up{color:var(--flow);font-weight:600}.down{color:var(--warn);font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>Taxa de transferència i amplada de banda</h1>
+  <p class="sub">Una cosa és el que l’enllaç pot arribar a portar i una altra el que porta de debò. Aquest canvas ho resumeix en una pàgina.</p>
+
+  <div class="grid">
+
+    <section class="box def c12">
+      <h2>Què és la taxa de transferència</h2>
+      <p>És la quantitat de dades que es transmeten <strong>realment</strong> d’un punt a un altre en un temps determinat.</p>
+      <p class="note">Es mesura en <strong>bps</strong> (Kbps, Mbps, Gbps) o, per a fitxers, en <strong>bytes per segon</strong> (KB/s, MB/s).</p>
+    </section>
+
+    <section class="box c7">
+      <h2>Amplada de banda vs taxa de transferència</h2>
+      <svg class="pipe" viewBox="0 0 520 150" role="img" aria-label="Un tub de 1 Gbps pel qual només passen 700 Mbps">
+        <rect x="20" y="30" width="480" height="70" rx="12" fill="none" stroke="var(--pipe)" stroke-width="3"/>
+        <rect x="26" y="52" width="336" height="26" rx="8" fill="var(--flow)"/>
+        <text x="20" y="20">Amplada de banda: 1 Gbps (capacitat màxima teòrica)</text>
+        <text x="26" y="120">Taxa de transferència: 700 Mbps (velocitat real)</text>
+        <text x="372" y="70" style="fill:var(--muted)">espai no aprofitat</text>
+      </svg>
+      <table>
+        <tr><th>Amplada de banda</th><td>Capacitat màxima teòrica de l’enllaç.</td></tr>
+        <tr><th>Throughput</th><td>Velocitat real obtinguda, sempre <strong>menor o igual</strong> que l’amplada de banda.</td></tr>
+      </table>
+    </section>
+
+    <section class="box c5">
+      <h2>Tipus de taxa</h2>
+      <table>
+        <tr><th>Throughput</th><td>Dades totals transmeses, amb capçaleres i retransmissions.</td></tr>
+        <tr><th>Goodput</th><td>Només les dades útils de l’aplicació.</td></tr>
+        <tr><th>Instantània</th><td>Velocitat en un moment concret.</td></tr>
+        <tr><th>Mitjana</th><td>Dades totals / temps total.</td></tr>
+      </table>
+    </section>
+
+    <section class="box c6">
+      <h2>Fórmules</h2>
+      <div class="formula">Taxa = dades transferides / temps</div>
+      <div class="formula">S = BW × T
+        <small>T = S / BW &nbsp;·&nbsp; BW = S / T</small>
+      </div>
+      <p class="note">S = mida de les dades, BW = taxa o amplada de banda, T = temps.</p>
+    </section>
+
+    <section class="box c6">
+      <h2>Exemple resolt</h2>
+      <p>Es descarreguen <strong>500 MB en 40 s</strong>.</p>
+      <ul class="steps">
+        <li>500 MB = 4.000 Mb <span class="note">(1 byte = 8 bits)</span></li>
+        <li>Taxa = 4.000 / 40</li>
+        <li><strong>Taxa = 100 Mbps</strong></li>
+      </ul>
+    </section>
+
+    <section class="box c6">
+      <h2>Factors que l’afecten</h2>
+      <ul class="chips">
+        <li>Amplada de banda disponible</li>
+        <li>Congestió i pèrdua de paquets</li>
+        <li>Latència i finestra TCP</li>
+        <li>Capçaleres i retransmissions</li>
+        <li>Maquinari (NIC, commutadors, disc)</li>
+        <li>Interferències (Wi-Fi)</li>
+        <li>Qualitat del cablejat</li>
+      </ul>
+    </section>
+
+    <section class="box c6">
+      <h2>Canvi d’unitats de mida</h2>
+      <div class="units" aria-label="De gran a petit">
+        <span class="u">TB</span><span class="arr up">×1024</span>
+        <span class="u">GB</span><span class="arr up">×1024</span>
+        <span class="u">MB</span><span class="arr up">×1024</span>
+        <span class="u">KB</span>
+      </div>
+      <p><span class="up">De gran a petita:</span> multiplica per 1024.<br>
+      2 TB = 2×1024×1024×1024 = <strong>2.147.483.648 KB</strong></p>
+      <p><span class="down">De petita a gran:</span> divideix per 1024.<br>
+      2.147.483.648 KB / 1024 = 2.097.152 MB / 1024 = 2048 GB / 1024 = <strong>2 TB</strong></p>
+    </section>
+
+  </div>
+</main>
+</body>
+</html>
